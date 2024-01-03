@@ -26,13 +26,14 @@ const getAsyncStories = () =>
 const storiesReducer = (state, action) => {
   switch(action.type) {
     case 'STORIES_FETCH_INIT':
-      return {action.payload};
+      return {...state, isLoading: true, isError: false};
     case 'STORIES_FETCH_SUCCESS':
-      return {};
+      return {...state, isLoading: false, isError: false, data: action.payload};
     case 'STORIES_FETCH_FAILURE':
-      return {};
+      return {...state, isLoading: false, isError: true};
     case 'REMOVE_STORY':
-      return {state.filter((story) => action.payload.objectID !== story.objectID)};
+      return {...state, 
+        data: state.data.filter((story) => action.payload.objectID !== story.objectID)};
     default:
       throw new Error();
   }
