@@ -3,6 +3,7 @@ import axios from 'axios';
 //import styles from './App.module.css';
 //import cs from 'classnames';
 import styled from 'styled-components';
+import check_img from './check.png';
 
 const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
@@ -22,7 +23,8 @@ const storiesReducer = (state, action) => {
   }
 };
 
-const List = ({list, onRemoveItem}) => (
+const List = React.memo(({list, onRemoveItem}) => (
+  console.log('B:List') ||
   <ul>
     {list.map((item)=>{
       return (
@@ -31,7 +33,7 @@ const List = ({list, onRemoveItem}) => (
     })
     }
   </ul>
-);
+));
 
 const Item = ({item, onRemoveItem}) => (
   <StyledItem>
@@ -40,7 +42,9 @@ const Item = ({item, onRemoveItem}) => (
     <StyledColumn width="10%">{item.num_comments}</StyledColumn>
     <StyledColumn width="10%">{item.points}</StyledColumn>
     <StyledColumn width="10%">
-      <StyledButtonSmall type="button" onClick={onRemoveItem.bind(null, item)}>Dismiss</StyledButtonSmall>
+      <StyledButtonSmall type="button" onClick={onRemoveItem.bind(null, item)}>
+        <StyledIcon src={check_img} alt="check" height="18px" width="18px" />
+      </StyledButtonSmall>
     </StyledColumn>
   </StyledItem>
 );
@@ -55,30 +59,33 @@ const InputWithLabel = ({id, value, type='text', onInputChange, isFocused, child
 
   return (
     <>
-      <label htmlFor={id} className={styles.label}>{children}</label>
-      <input ref={inputRef} id={id} type={type} value={value} onChange={onInputChange} className={styles.input}/>
+      <StyledLabel htmlFor={id}>{children}</StyledLabel>
+      <StyledInput ref={inputRef} id={id} type={type} value={value} onChange={onInputChange} />
     </>
   );
 };
 
 const SearchForm = ({searchTerm, onSearchInput, onSearchSubmit}) => (
-  <form onSubmit={onSearchSubmit} className={styles.searchForm}>
+  <StyledSearchForm onSubmit={onSearchSubmit}>
     <InputWithLabel id="search" value={searchTerm} isFocused onInputChange={onSearchInput}>
       <strong>Search:</strong>
     </InputWithLabel>
-    <button type="submit" disabled={!searchTerm} className={cs(styles.button, styles.buttonLarge)}>Submit</button>
-  </form>
+    <StyledButtonLarge type="submit" disabled={!searchTerm}>Submit</StyledButtonLarge>
+  </StyledSearchForm>
 );
 
 const useSemiPersistentState = (key, initialState) => {
+  const isMounted = React.useRef(false);
   const [value, setValue] = React.useState(localStorage.getItem(key) || initialState);
   React.useEffect(()=>{
-    localStorage.setItem(key, value)
+    if (!isMounted.current) {
+      isMounted.current = true;
+    } else {
+      localStorage.setItem(key, value);
+    }
   }, [value, key]);
   return [value, setValue];
 };
-
-
 
 const App = () => {
   const [searchTerm, setSearchTerm] = useSemiPersistentState('search', 'React');
@@ -108,10 +115,11 @@ const App = () => {
     handleFetchStories();
   }, [handleFetchStories]);
 
-  const handleRemoveStory = (item) => {
+  const handleRemoveStory = React.useCallback(item => {
     dispatchStories({type: 'REMOVE_STORY', payload: item});
-  };
+  }, []);
 
+  console.log('B:App');
   return (
     <StyledContainer>
       <StyledHeadlinePrimary>My Hacker Stories</StyledHeadlinePrimary>
@@ -156,6 +164,51 @@ const StyledColumn = styled.span`
     color: inherit;
   }
   width: ${(props)=>props.width};
+`;
+
+const StyledButton = styled.button`
+  background: transparent;
+  border: 1px solid #171212;
+  padding: 5px;
+  cursor: pointer;
+  transition: all 0.1s ease-in;
+  &:hover {
+    background: #171212;
+    color: #ffffff;
+  }
+`;
+
+const StyledButtonSmall = styled(StyledButton)`
+  padding: 5px;
+`;
+
+const StyledButtonLarge = styled(StyledButton)`
+  padding: 10px;
+`;
+
+const StyledSearchForm = styled.form`
+  padding: 10px 0 20px 0;
+  display: flex;
+  align-items: baseline;
+`;
+
+const StyledLabel = styled.label`
+  border-top: 1px solid #171212;
+  border-left: 1px solid #171212;
+  padding-left: 5px;
+  font-size: 24px;
+`;
+
+const StyledInput = styled.input`
+  border: none;
+  border-bottom: 1px solid #171212;
+  background-color: transparent;
+  font-size: 24px;
+`;
+
+const StyledIcon = styled.img`
+  fill: #ffffff;
+  stroke: #ffffff;
 `;
 
 export default App;
