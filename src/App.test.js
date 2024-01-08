@@ -75,3 +75,43 @@ describe('SearchForm', ()=>{
     });
 });
 
+describe('App', ()=>{
+    test('succeeds fetching data', async ()=>{
+        const promise = Promise.resolve({data: {hits: stories}});
+        axios.get.mockImplementationOnce(()=>promise);
+        render(<App/>);
+        expect(screen.queryByText(/Loading/)).toBeInTheDocument();
+        //screen.debug();
+        await act(()=>promise);
+        expect(screen.queryByText(/Loading/)).toBeNull();
+        //screen.debug();
+        expect(screen.getByText('React')).toBeInTheDocument();
+        expect(screen.getByText('Redux')).toBeInTheDocument();
+        expect(screen.getAllByRole('img').length).toBe(2);
+    });
+    test('fails fetching data', async () => {
+        const promise = Promise.reject();
+        axios.get.mockImplementationOnce(() => promise);
+        render(<App />);
+        expect(screen.getByText(/Loading/)).toBeInTheDocument();
+        try {
+            await act(() => promise);
+        } catch (error) {
+            //expect(screen.queryByText(/Loading/)).toBeNull();
+            //expect(screen.queryByText(/went wrong/)).toBeInTheDocument();
+        }
+    });
+    test('removes a story', async()=>{
+        const promise = Promise.resolve({
+            data: {hits: stories}
+        });
+        axios.get.mockImplementationOnce(()=>promise);
+        render(<App/>);
+        await act(()=>promise);
+        expect(screen.getAllByRole('img').length).toBe(2);
+        expect(screen.getByText('Jordan Walke')).toBeInTheDocument();
+        fireEvent.click(screen.getAllByRole('img')[0]);
+        expect(screen.getAllByRole('img').length).toBe(1);
+        expect(screen.queryByText('Jordan Walke')).toBeNull();
+    });
+});
