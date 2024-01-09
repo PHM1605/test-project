@@ -1,35 +1,23 @@
-function Range(from, to) {
-    this.from = from;
-    this.to = to;
-}
-
-Range.prototype = {
-    includes: function(x) {return this.from <=x && x<=this.to;},
-    [Symbol.iterator]: function* () {
-        for(let x=this.from; x<=this.to; x++) {
-            yield x;
+class TypedMap extends Map {
+    constructor(keyType, valueType, entries) {
+        if(entries) {
+            for(let [k,v] of entries) {
+                if(typeof k !== keyType || typeof v !== valueType){
+                    throw new TypeError(`Wrong type for entry [${k}, ${v}]`);
+                }
+            }
         }
-    },
-    toString: function() {
-        return "(" + this.from + "..." + this.to + ")";
+        super(entries);
+        this.keyType = keyType;
+        this.valueType = valueType;
+    }
+    set(key, value) {
+        if(this.keyType && typeof key !== this.keyType){
+            throw new TypeError(`${key} is not of type ${this.keyType}`);
+        }
+        if(this.valueType && typeof value !== this.valueType) {
+            throw new TypeError(`${value} is not of type ${this.valueType}`);
+        }
+        return super.set(key, value);
     }
 }
-
-function Span(start, span) {
-    if(span >= 0) {
-        this.from = start;
-        this.to = start + span;
-    } else {
-        this.to = start; 
-        this.from = start + span;
-    }
-}
-
-Span.prototype = Object.create(Range.prototype);
-Span.prototype.constructor = Range;
-let test = new Span(3,5);
-console.log(test.toString());
-Span.prototype.toString = function() {
-    return `${this.from}.....+${this.to - this.from}`;
-}
-console.log(test.toString());
